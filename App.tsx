@@ -204,7 +204,7 @@ if (activeConversation) {
   if (insertError) flash(insertError.message, true);
 }
 
-    if (insertError) flash(insertError.message, true); else setDraft('');
+     Seadrift('');
     setSending(false);
   };
 
@@ -218,12 +218,26 @@ if (activeConversation) {
     const { error: uploadError } = await supabase.storage.from('chat-images').upload(path, file, { contentType: file.type, upsert: false });
     if (uploadError) flash(uploadError.message, true);
     else {
-      const payload = activeConversation
-        ? { sender_id: session.user.id, conversation_id: activeConversation.id, image_path: path }
-        : { sender_id: session.user.id, room_id: roomId, image_path: path };
-      const { error: messageError } = await supabase.from('messages').insert(payload);
-      if (messageError) flash(messageError.message, true); else flash('Image sent.');
-    }
+
+      
+if (activeConversation) {
+  const { error: messageError } = await supabase.from('messages').insert({
+    sender_id: session.user.id,
+    conversation_id: activeConversation.id,
+    image_path: path
+  });
+  if (messageError) flash(messageError.message, true);
+  else flash('Image sent.');
+} else {
+  const { error: messageError } = await supabase.from('messages').insert({
+    sender_id: session.user.id,
+    room_id: roomId,
+    image_path: path
+  });
+  if (messageError) flash(messageError.message, true);
+  else flash('Image sent.');
+}
+
     setSending(false);
     if (fileRef.current) fileRef.current.value = '';
   };
