@@ -187,10 +187,23 @@ export default function App() {
     const body = draft.trim();
     if (body.length > 2000) { flash('Messages must be 2,000 characters or fewer.', true); return; }
     setSending(true);
-    const payload = activeConversation
-      ? { sender_id: session.user.id, conversation_id: activeConversation.id, body }
-      : { sender_id: session.user.id, room_id: roomId, body };
-    const { error: insertError } = await supabase.from('messages').insert(payload);
+    
+if (activeConversation) {
+  const { error: insertError } = await supabase.from('messages').insert({
+    sender_id: session.user.id,
+    conversation_id: activeConversation.id,
+    body
+  });
+  if (insertError) flash(insertError.message, true);
+} else {
+  const { error: insertError } = await supabase.from('messages').insert({
+    sender_id: session.user.id,
+    room_id: roomId,
+    body
+  });
+  if (insertError) flash(insertError.message, true);
+}
+
     if (insertError) flash(insertError.message, true); else setDraft('');
     setSending(false);
   };
