@@ -216,16 +216,32 @@ if (activeConversation) {
     const folder = activeConversation ? `dm/${activeConversation.id}` : `room/${roomId}`;
     const path = `${folder}/${session.user.id}-${crypto.randomUUID()}.${(file.name.split('.').pop() || 'jpg').replace(/[^a-zA-Z0-9]/g, '').slice(0, 5)}`;
     const { error: uploadError } = await supabase.storage.from('chat-images').upload(path, file, { contentType: file.type, upsert: false });
-    if (uploadError) flash(uploadError.message, true);
-    else {
+    
+if (uploadError) {
+  flash(uploadError.message, true);
+} else {
+  if (activeConversation) {
+    const { error: messageError } = await supabase.from('messages').insert({
+      sender_id: session.user.id,
+      conversation_id: activeConversation.id,
+      image_path: path
+    });
+    if (messageError) flash(messageError.message, true);
+    else flash('Image sent.');
+  } else {
+    const { error: messageError } = await supabase.from('messages').insert({
+      sender_id: session.user.id,
+      room_id: roomId,
+      image_path: path
+    });
+    if (messageError) flash(messageError.message, true);
+    else flash('Image sent.');
+  }
+}
+setSending(false);
+if (fileRef.current) fileRef.current.value = '';
+};
 
-      
-if (activeConversation) {
-  const { error: messageError } = await supabase.from('messages').insert({
-    sender_id: session.user.id,
-    conversation_id: activeConversation.id,
-    image_path: path
-  });
   if (messageError) flash(messageError.message, true);
   else flash('Image sent.');
 } else {
