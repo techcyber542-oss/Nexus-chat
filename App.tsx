@@ -5,7 +5,7 @@ import {
   ShieldAlert, Smile, Sparkles, UserRound, Users, X,
 } from 'lucide-react';
 import type { Session } from '@supabase/supabase-js';
-import { hasSupabaseConfig, supabase } from './lib/supabase';
+import { hasSupabaseConfig, supabase } from './libs/Supabase';
 
 type Profile = { id: string; username: string; created_at?: string };
 type Room = { id: string; name: string; description: string; created_at?: string };
