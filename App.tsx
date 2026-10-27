@@ -204,7 +204,7 @@ if (activeConversation) {
   if (insertError) flash(insertError.message, true);
 }
 
-     Seadrift('');
+     
     setSending(false);
   };
 
