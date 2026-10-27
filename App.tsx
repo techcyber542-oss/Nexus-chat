@@ -358,8 +358,89 @@ if (activeConversation) {
         <div ref={bottomRef}/>
       </div>
       {showScrollButton && <button className="scroll-bottom" onClick={() => bottomRef.current?.scrollIntoView({ behavior: 'smooth' })}><ArrowDown size={16}/> Latest messages</button>}
-      <div className="composer-area"><form className="composer glass" onSubmit={sendMessage}><button type="button" className="composer-icon" title="Attach image" aria-label="Attach image" disabled={sending} onClick={() => fileRef.current?.click()}><ImagePlus size={19}/></button><input ref={fileRef} type="file" accept="image/*" hidden onChange={(e) => void sendImage(e.target.files?.[0])}/><input className="message-input" value={draft} onChange={(e) => setDraft(e.target.value)} placeholder={`Message ${currentTitle}`} maxLength={2000} aria-label="Message"/><button type="button" className="composer-icon emoji-button" title="Add a smile" aria-label="Add a smile" onClick={() => setDraft((v) => `${v}${v ? ' ' : ''}🙂`)}><Smile size={19}/></button><button className="send-button" type="submit" disabled={!draft.trim() || sending} aria-label="Send message">{sending ? <div className="mini-loader"/> : <Send size={17}/>}</button></form><div className="composer-foot"><span><Shield size={12}/> Be respectful. Never share passwords or private details.</span><span>{draft.length}/2000</span></div></div>
-    </main>
+   
+<div className="composer-area">
+  <form
+    className="composer glass"
+    onSubmit={(e) => {
+      e.preventDefault();
+      if (!draft.trim() || sending) return;
+      sendMessage(e);
+    }}
+  >
+    <button
+      type="button"
+      className="composer-icon"
+      title="Attach image"
+      aria-label="Attach image"
+      disabled={sending}
+      onClick={() => fileRef.current?.click()}
+    >
+      <ImagePlus size={19} />
+    </button>
+
+    <input
+      ref={fileRef}
+      type="file"
+      accept="image/*"
+      hidden
+      disabled={sending}
+      onChange={(e) => {
+        const file = e.target.files?.[0];
+        if (file) void sendImage(file);
+        e.target.value = "";
+      }}
+    />
+
+    <input
+      className="message-input"
+      type="text"
+      value={draft}
+      onChange={(e) => setDraft(e.target.value)}
+      placeholder={`Message ${currentTitle}`}
+      maxLength={2000}
+      aria-label="Message"
+      autoComplete="off"
+      disabled={sending}
+    />
+
+    <button
+      type="button"
+      className="composer-icon emoji-button"
+      title="Add a smile"
+      aria-label="Add a smile"
+      disabled={sending}
+      onClick={() =>
+        setDraft((v) => (v + (v ? " " : "") + "🙂").slice(0, 2000))
+      }
+    >
+      <Smile size={19} />
+    </button>
+
+    <button
+      className="send-button"
+      type="submit"
+      disabled={!draft.trim() || sending}
+      aria-label="Send message"
+      title="Send message"
+    >
+      {sending ? (
+        <div className="mini-loader" />
+      ) : (
+        <Send size={17} />
+      )}
+    </button>
+  </form>
+
+  <div className="composer-foot">
+    <span>
+      <Shield size={12} />
+      {" "}Be respectful. Never share passwords or private details.
+    </span>
+    <span>{draft.length}/2000</span>
+  </div>
+</div>
+  </main>
     <aside className="right-rail"><div className="rail-heading"><span>COMMUNITY</span><button className="tiny-icon" aria-label="Refresh online list" onClick={() => flash('Online status updates automatically.')}><MoreHorizontal size={17}/></button></div><div className="rail-card community-summary"><div className="summary-top"><div className="summary-icon"><Users size={19}/></div><span className="live-label"><i className="status-dot"/> LIVE</span></div><strong>{online.length} people online</strong><p>People here right now, across Nexus.</p><div className="avatar-stack">{online.slice(0, 5).map((person) => <div key={person.user_id} className="avatar stack-avatar" title={person.username}>{initials(person.username)}</div>)}{online.length > 5 && <div className="avatar stack-more">+{online.length - 5}</div>}</div></div><div className="rail-section"><div className="rail-section-title"><span>ONLINE NOW</span><span className="count-pill">{online.length}</span></div>{online.length ? <div className="online-list">{online.map((person) => <div className="online-person" key={person.user_id}><div className="avatar online-avatar">{initials(person.username)}</div><div className="online-person-copy"><strong>{person.username}{person.user_id === session.user.id ? ' (you)' : ''}</strong><span><i className="status-dot"/> Active now</span></div><button className="tiny-icon online-dm" title={`Message ${person.username}`} aria-label={`Message ${person.username}`} disabled={person.user_id === session.user.id} onClick={() => { void supabase.from('profiles').select('id, username').eq('id', person.user_id).single().then(({ data }) => { if (data) void openDM(data as Profile); }); }}><MessageCircle size={14}/></button></div>)}</div> : <p className="rail-empty">You're the first one here. Invite someone in.</p>}</div><div className="rail-section discover-section"><div className="rail-section-title"><span>QUICK LINKS</span></div><button className="quick-link" onClick={() => setShowPeople(true)}><div className="quick-link-icon"><Search size={16}/></div><div><strong>Find people</strong><span>Start a private chat</span></div><ArrowLeft size={15} className="quick-arrow"/></button><button className="quick-link" onClick={() => flash('Rules: be respectful, no spam, no harassment, no illegal content, and do not share personal information.')}><div className="quick-link-icon"><Shield size={16}/></div><div><strong>Community rules</strong><span>Keep Nexus welcoming</span></div><ArrowLeft size={15} className="quick-arrow"/></button>{isModerator && <button className="quick-link" onClick={() => { setShowReports(true); void loadReports(); }}><div className="quick-link-icon"><ShieldAlert size={16}/></div><div><strong>Review reports</strong><span>Moderation queue</span></div><ArrowLeft size={15} className="quick-arrow"/></button>}{isModerator && <button className="quick-link" onClick={createRoom}><div className="quick-link-icon"><Plus size={16}/></div><div><strong>Create a room</strong><span>Moderator controls</span></div><ArrowLeft size={15} className="quick-arrow"/></button>}</div><div className="rail-footer"><div className="footer-brand"><div className="brand-mark small"><Sparkles size={13}/></div><span>NEXUS CHAT</span><span className="version-tag">BETA</span></div><p>A little corner of the internet.</p><span>Guest mode · Community-powered</span></div></aside>
     {(notice || error) && <div className={`toast ${error ? 'toast-error' : ''}`} role="status"><span className="toast-icon">{error ? <X size={16}/> : <Check size={16}/>}</span>{error || notice}<button onClick={() => { setNotice(''); setError(''); }} aria-label="Dismiss"><X size={14}/></button></div>}
     {showPeople && <div className="modal-backdrop" onMouseDown={(e) => { if (e.target === e.currentTarget) setShowPeople(false); }}><section className="people-modal glass" role="dialog" aria-modal="true" aria-labelledby="people-title"><div className="modal-heading"><div><div className="eyebrow">MAKE A CONNECTION</div><h2 id="people-title">Find people</h2><p>Search guest usernames to start a private conversation.</p></div><button className="icon-button" aria-label="Close" onClick={() => setShowPeople(false)}><X size={18}/></button></div><form className="people-search" onSubmit={searchPeople}><Search size={17}/><input value={peopleSearch} onChange={(e) => setPeopleSearch(e.target.value)} placeholder="Search usernames…" autoFocus/><button className="primary-button" disabled={searchingPeople}>{searchingPeople ? 'Searching' : 'Search'}</button></form><div className="people-results">{peopleResults.length ? peopleResults.map((person) => <div className="person-result" key={person.id}><div className="avatar">{initials(person.username)}</div><div className="person-result-copy"><strong>@{person.username}</strong><span>Guest member</span></div><button className="secondary-button" onClick={() => void openDM(person)}><MessageCircle size={15}/> Message</button></div>) : <div className="people-empty"><div className="empty-chat-orb"><UserRound size={22}/></div><strong>Find your people</strong><span>Search for at least 3 characters. Exact usernames work best.</span></div>}</div><div className="modal-note"><Shield size={14}/> Private messages are visible only to conversation participants.</div></section></div>}
